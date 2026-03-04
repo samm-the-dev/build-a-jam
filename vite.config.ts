@@ -3,11 +3,10 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 // https://vite.dev/config/
-export default defineConfig(({ command }) => ({
+export default defineConfig({
   plugins: [react()],
-  // Base path: '/build-a-jam/' for GitHub Pages production build,
-  // '/' for local dev so refreshing doesn't show a redirect warning
-  base: command === 'build' ? '/build-a-jam/' : '/',
+  // Custom domain (buildajam.app) serves from root — no path prefix needed
+  base: '/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -22,4 +21,4 @@ export default defineConfig(({ command }) => ({
     port: 5173,
     strictPort: true, // Fail if port is in use instead of auto-incrementing
   },
-}));
+});
