@@ -4,9 +4,9 @@
 
 <!-- @import: Claude Code includes this file's content -->
 
-@.toolbox/templates/ai-context/CLAUDE.md
+@.toolbox/ai-context/CLAUDE.md
 
-> _[View shared context](.toolbox/templates/ai-context/CLAUDE.md) — git practices, testing, PR workflows, accessibility_
+> _[View shared context](.toolbox/ai-context/CLAUDE.md) — git practices, testing, PR workflows, accessibility_
 
 ---
 
