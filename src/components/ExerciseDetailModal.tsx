@@ -78,8 +78,8 @@ function ExerciseDetailModal({
         style={swipeStyle}
         className="scrollbar-dark max-h-[80vh] max-w-2xl gap-0 overflow-y-auto bg-card p-0"
       >
-        {/* Drag handle — visual cue that this sheet can be swiped away */}
-        <div className="flex justify-center pt-3">
+        {/* Drag handle — mobile only; swipe-to-dismiss is a touch gesture */}
+        <div className="flex justify-center pt-3 sm:hidden">
           <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
         </div>
 
