@@ -1,6 +1,6 @@
 /**
  * App-level share utilities — wraps the toolbox share module with toasts
- * and adds exercise/session-specific sharing helpers.
+ * and adds exercise-specific sharing helpers.
  *
  * LEARNING NOTES - MODULE LAYERING:
  *
@@ -12,15 +12,14 @@
  * 2. WHY TWO LAYERS?
  *    The toolbox module (`.toolbox/lib/share.ts`) is pure — no toast
  *    dependency, returns a result enum. This module wraps it with sonner
- *    toasts and adds app-specific helpers (exercise deep links, session
- *    plan text). Bio and ohm wrap the same toolbox module with their own
- *    toast implementations.
+ *    toasts and adds app-specific helpers (exercise deep links).
+ *    Bio and ohm wrap the same toolbox module with their own toast
+ *    implementations.
  */
 
 import { toast } from 'sonner';
-import { shareUrl as _shareUrl, shareText as _shareText } from '../../.toolbox/lib/share';
-import { getExerciseName } from '../data/exercises';
-import type { Exercise, SessionExercise } from '../types';
+import { shareUrl as _shareUrl } from '../../.toolbox/lib/share';
+import type { Exercise } from '../types';
 
 /**
  * Share a URL with toast feedback.
@@ -45,24 +44,4 @@ export async function shareExercise(exercise: Exercise): Promise<void> {
   const url = new URL(import.meta.env.BASE_URL, window.location.origin);
   url.searchParams.set('exercise', exercise.id);
   await shareUrl(url.toString(), exercise.name);
-}
-
-/**
- * Share a session plan as a formatted text list.
- *
- * Produces something like:
- *   Tonight's jam lineup:
- *   1. Zip Zap Zop (10 min)
- *   2. Break (5 min)
- *   3. New Choice (15 min)
- */
-export async function shareSessionPlan(exercises: SessionExercise[]): Promise<void> {
-  const list = exercises
-    .map((se, i) => `${i + 1}. ${getExerciseName(se)} (${se.duration} min)`)
-    .join('\n');
-  const text = `Tonight's jam lineup:\n${list}`;
-
-  const result = await _shareText(text, 'Build-a-Jam Session');
-  if (result === 'copied') toast.success('Session plan copied!');
-  if (result === 'failed') toast.error('Could not copy session plan');
 }

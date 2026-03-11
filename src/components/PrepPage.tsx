@@ -34,13 +34,12 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ArrowRight, Coffee, GripVertical, Share2, Star, X } from 'lucide-react';
+import { ArrowRight, Coffee, GripVertical, Star, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSession } from '../context/SessionContext';
 import { getExerciseById, BREAK_EXERCISE_ID, getExerciseName } from '../data/exercises';
 import type { Exercise, SessionExercise } from '../types';
 import { type ConfirmConfig, confirmRemove } from '../lib/confirmations';
-import { shareSessionPlan } from '../lib/share';
 import { useTemplateSaver } from '../hooks/useTemplateSaver';
 import { useExerciseFilter } from '../hooks/useExerciseFilter';
 import ExerciseFilterBar from './ExerciseFilterBar';
@@ -319,13 +318,6 @@ function PrepPage() {
             </h2>
             {sessionExercises.length > 0 && (
               <div className="flex items-center gap-3">
-                <button
-                  onClick={() => void shareSessionPlan(sessionExercises)}
-                  className="inline-flex items-center gap-1 text-sm text-primary transition-colors hover:text-primary-hover"
-                  title="Share session plan"
-                >
-                  <Share2 className="h-4 w-4" /> Share
-                </button>
                 <button
                   onClick={() => template.start(state.currentSession?.name ?? '')}
                   className="inline-flex items-center gap-1 text-sm text-star transition-colors hover:text-star/80"
