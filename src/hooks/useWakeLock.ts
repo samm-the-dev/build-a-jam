@@ -27,7 +27,7 @@
  *
  * 5. RACE CONDITION GUARDS:
  *    Both effects define a local `acquire()` helper so no cross-effect
- *    closure captures stale state. Two guards prevent sentinel leaks:
+ *    closure captures stale state. Three guards prevent sentinel leaks:
  *    - `cancelled` flag: if deps change while the request is in-flight,
  *      the resolved sentinel is released immediately.
  *    - Duplicate guard: if `wakeLockRef.current` is already set (rapid
