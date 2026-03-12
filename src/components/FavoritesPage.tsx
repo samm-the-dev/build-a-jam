@@ -156,7 +156,6 @@ function FavoritesPage() {
                             </span>
                           </div>
 
-                          {/* Collapsed: exercise names as badges */}
                           {/* Collapsed: exercise names as non-interactive badges (tap the row to expand) */}
                           {!isExpanded && (
                             <div className="mt-2 flex flex-wrap gap-1">

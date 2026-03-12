@@ -18,7 +18,7 @@
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ChevronRight, Star } from 'lucide-react';
+import { ArrowRight, ChevronRight, Star, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSession } from '../context/SessionContext';
 import {
@@ -136,7 +136,7 @@ function HistoryPage() {
                     onClick={() => setExpandedIndex(isExpanded ? null : i)}
                     className="w-full text-left"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-2">
                         <ChevronRight
                           className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-90' : ''}`}
@@ -154,10 +154,7 @@ function HistoryPage() {
                         {' · '}
                         {hasActualTime ? (
                           <>
-                            {formatDuration(actualTotalSeconds)}{' '}
-                            <span className="text-muted-foreground">
-                              / {plannedMinutes} min planned
-                            </span>
+                            {formatDuration(actualTotalSeconds)} / {plannedMinutes} min planned
                           </>
                         ) : (
                           <>{plannedMinutes} min</>
@@ -165,9 +162,9 @@ function HistoryPage() {
                       </span>
                     </div>
 
-                    {/* Collapsed: exercise names as badges (clickable for details) */}
+                    {/* Collapsed: exercise names as non-interactive badges (tap row to expand) */}
                     {!isExpanded && (
-                      <div className="ml-5 mt-2 flex flex-wrap gap-1">
+                      <div className="mt-2 flex flex-wrap gap-1">
                         {session.exercises.map((se, j) => {
                           const isBreak = se.exerciseId === BREAK_EXERCISE_ID;
                           const ex = isBreak ? undefined : getExerciseById(se.exerciseId);
@@ -175,15 +172,9 @@ function HistoryPage() {
                             <Badge
                               key={se.slotId ?? j}
                               variant="outline"
-                              className={`border-input text-xs ${ex ? 'cursor-pointer text-primary hover:bg-secondary/80' : 'text-secondary-foreground'}`}
-                              onClick={
-                                ex
-                                  ? (e: React.MouseEvent) => {
-                                      e.stopPropagation();
-                                      setDetailExercise(ex);
-                                    }
-                                  : undefined
-                              }
+                              className={`border-input text-xs ${
+                                ex ? 'text-primary' : 'text-secondary-foreground'
+                              }`}
                             >
                               {isBreak ? 'Break' : (ex?.name ?? se.exerciseId)}
                             </Badge>
@@ -195,7 +186,7 @@ function HistoryPage() {
 
                   {/* Expanded: full exercise details */}
                   {isExpanded && (
-                    <div className="ml-5 mt-4 space-y-3">
+                    <div className="mt-4 space-y-3">
                       {session.exercises.map((se, j) => (
                         <div key={se.slotId ?? j} className="border-l-2 border-border pl-3">
                           <div className="flex items-center justify-between">
@@ -279,22 +270,31 @@ function HistoryPage() {
                             </Button>
                           </div>
                         ) : (
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                            <button
+                          <div className="flex items-center gap-1 sm:gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDeleteSession(i)}
+                              title="Delete session"
+                              className="text-destructive hover:text-destructive/80"
+                            >
+                              <Trash2 className="h-4 w-4 sm:mr-1" />
+                              <span className="hidden sm:inline">Delete</span>
+                            </Button>
+                            <div className="flex-1" />
+                            <Button
+                              size="sm"
+                              variant="outline"
                               onClick={() => {
                                 setSavingIndex(i);
                                 setTemplateName('');
                               }}
-                              className="inline-flex items-center gap-1 text-xs text-star transition-colors hover:text-star/80"
+                              title="Save as favorite"
+                              className="text-star hover:text-star/80"
                             >
-                              <Star className="h-4 w-4 fill-current" /> Save as favorite
-                            </button>
-                            <button
-                              onClick={() => handleDeleteSession(i)}
-                              className="text-xs text-muted-foreground transition-colors hover:text-destructive"
-                            >
-                              Delete session
-                            </button>
+                              <Star className="h-4 w-4 fill-current sm:mr-1" />
+                              <span className="hidden sm:inline">Save</span>
+                            </Button>
                           </div>
                         )}
                       </div>

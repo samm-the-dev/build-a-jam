@@ -57,6 +57,7 @@ interface DialogContentProps extends React.ComponentPropsWithoutRef<
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- forwardRef requires the param; sheetRef is used instead
 >(({ className, children, onSwipeDismiss, ...props }, _ref) => {
   const { sheetRef, touchHandlers } = useSheetDismiss(onSwipeDismiss);
 
