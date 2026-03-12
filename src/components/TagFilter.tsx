@@ -45,7 +45,7 @@ function TagFilter({
   const [showAll, setShowAll] = useState(false);
 
   // When maxVisible is set, the collapsed view shows only that many featured tags.
-  // "Show more" first expands to all featured tags, then to all tags.
+  // "Show more" toggles between this (possibly sliced) featured set and all tags.
   const baseTags = maxVisible && !showAll ? featuredTags.slice(0, maxVisible) : featuredTags;
   const displayedTags = showAll ? allTags : baseTags;
   const hasMore = showAll || displayedTags.length < allTags.length;

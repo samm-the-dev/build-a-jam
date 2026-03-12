@@ -189,7 +189,7 @@ function RichTextEditor({ content, onChange, placeholder, children }: RichTextEd
           <ListOrdered className="h-4 w-4" />
         </ToolbarButton>
 
-        <span className="ml-2 text-xs text-muted-foreground">Ctrl+B for bold</span>
+        <span className="ml-2 hidden text-xs text-muted-foreground sm:inline">Ctrl+B for bold</span>
       </div>
 
       {/* Editor content area with placeholder overlay */}
