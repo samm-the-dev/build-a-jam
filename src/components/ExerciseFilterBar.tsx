@@ -49,6 +49,9 @@ interface ExerciseFilterBarProps {
   showHidden?: boolean;
   onToggleShowHidden?: () => void;
 
+  /** Max tags to show before collapsing (passed through to TagFilter) */
+  maxVisibleTags?: number;
+
   /** Optional content rendered to the right of the source dropdown (action buttons, etc.) */
   children?: React.ReactNode;
 }
@@ -63,6 +66,7 @@ function ExerciseFilterBar({
   searchText,
   onSearchChange,
   idPrefix = 'filter',
+  maxVisibleTags,
   hiddenCount = 0,
   showHidden = false,
   onToggleShowHidden,
@@ -102,6 +106,7 @@ function ExerciseFilterBar({
         allTags={allTags}
         selectedTags={selectedTags}
         onTagToggle={onTagToggle}
+        maxVisible={maxVisibleTags}
       />
 
       {/* Search input */}

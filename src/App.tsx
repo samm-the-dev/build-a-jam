@@ -62,7 +62,7 @@ function App() {
         >
           {/* Three-column flex: flex-1 spacers auto-balance so the title
               stays centered regardless of how many buttons are on the right. */}
-          <div className="flex items-start">
+          <div className={`flex ${isSessionView ? 'items-center' : 'items-start'}`}>
             <div className="flex-1" />
             <Link to="/" className="transition-opacity hover:opacity-80">
               <h1

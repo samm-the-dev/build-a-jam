@@ -36,6 +36,20 @@ const DISMISS_THRESHOLD = 80; // px dragged down to trigger dismiss
 const RESISTANCE = 0.5; // dampen drag beyond threshold
 
 /**
+ * Walk up from the touch target to find the nearest scrollable ancestor
+ * (up to the sheet root). If any ancestor has scrollTop > 0, the user
+ * is mid-scroll and we should not activate the dismiss gesture.
+ */
+function isInsideScrolledContent(target: EventTarget | null, root: HTMLElement): boolean {
+  let el = target as HTMLElement | null;
+  while (el && el !== root) {
+    if (el.scrollTop > 0) return true;
+    el = el.parentElement;
+  }
+  return false;
+}
+
+/**
  * Adds a swipe-down-to-dismiss gesture for mobile bottom-sheet dialogs.
  * Only activates when the sheet content is scrolled to the top.
  *
@@ -68,8 +82,8 @@ export function useSheetDismiss(onDismiss: (() => void) | undefined) {
       if (!onDismiss) return;
       const el = sheetRef.current;
       if (!el) return;
-      // Only begin if content is scrolled to top
-      if (el.scrollTop > 0) return;
+      // Only begin if neither the sheet nor any scrollable child is scrolled
+      if (el.scrollTop > 0 || isInsideScrolledContent(e.target, el)) return;
       startY.current = e.touches[0].clientY;
       currentY.current = startY.current;
       dragging.current = false;

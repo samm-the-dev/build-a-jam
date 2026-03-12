@@ -30,14 +30,25 @@ interface TagFilterProps {
   allTags: string[]; // Every tag in the current source
   selectedTags: string[];
   onTagToggle: (tag: string) => void;
+  /** Max tags to show before collapsing into "+N more" (default: show all featured) */
+  maxVisible?: number;
 }
 
-function TagFilter({ featuredTags, allTags, selectedTags, onTagToggle }: TagFilterProps) {
+function TagFilter({
+  featuredTags,
+  allTags,
+  selectedTags,
+  onTagToggle,
+  maxVisible,
+}: TagFilterProps) {
   // Local state: whether to show all tags or just featured ones
   const [showAll, setShowAll] = useState(false);
 
-  const displayedTags = showAll ? allTags : featuredTags;
-  const hasMore = allTags.length > featuredTags.length;
+  // When maxVisible is set, the collapsed view shows only that many featured tags.
+  // "Show more" toggles between this (possibly sliced) featured set and all tags.
+  const baseTags = maxVisible && !showAll ? featuredTags.slice(0, maxVisible) : featuredTags;
+  const displayedTags = showAll ? allTags : baseTags;
+  const hasMore = showAll || displayedTags.length < allTags.length;
 
   return (
     <div className="flex flex-col gap-2" role="group" aria-label="Filter by tags">
@@ -59,7 +70,7 @@ function TagFilter({ featuredTags, allTags, selectedTags, onTagToggle }: TagFilt
             onClick={() => setShowAll(!showAll)}
             className="px-2 py-1 text-sm text-primary transition-colors hover:text-primary-hover"
           >
-            {showAll ? 'show less' : `+${allTags.length - featuredTags.length} more`}
+            {showAll ? 'show less' : `+${allTags.length - displayedTags.length} more`}
           </button>
         )}
       </div>

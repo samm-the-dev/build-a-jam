@@ -125,14 +125,13 @@ function SortableQueueItem({
       style={style}
       className="flex items-center gap-2 rounded-lg bg-card px-3 py-2 text-sm"
     >
-      {/* Drag handle — only this element triggers dragging */}
+      {/* Remove button — leftmost (destructive action away from primary) */}
       <button
-        {...attributes}
-        {...listeners}
-        className="shrink-0 cursor-grab touch-none text-muted-foreground hover:text-foreground active:cursor-grabbing"
-        aria-label={`Drag to reorder ${name}`}
+        onClick={onRequestRemove}
+        className="shrink-0 text-destructive transition-colors hover:text-destructive/80"
+        aria-label={`Remove ${name}`}
       >
-        <GripVertical className="h-4 w-4" />
+        <X className="h-4 w-4" />
       </button>
 
       {/* Number + icon — breaks show a coffee icon, exercises show their number */}
@@ -147,8 +146,8 @@ function SortableQueueItem({
       {/* Exercise name */}
       <span className="min-w-0 flex-1 truncate text-foreground">{name}</span>
 
-      {/* Duration stepper */}
-      <div className="flex shrink-0 items-center gap-0.5">
+      {/* Duration stepper — "m" directly next to the number */}
+      <div className="flex shrink-0 items-center gap-1">
         <button
           type="button"
           onClick={() => onDurationChange(index, Math.max(1, se.duration - 1))}
@@ -160,6 +159,7 @@ function SortableQueueItem({
         </button>
         <span className="min-w-[3ch] text-center text-xs font-medium text-foreground">
           {se.duration}
+          <span className="text-muted-foreground">m</span>
         </span>
         <button
           type="button"
@@ -170,16 +170,16 @@ function SortableQueueItem({
         >
           <Plus className="h-3 w-3" />
         </button>
-        <span className="text-xs text-muted-foreground">m</span>
       </div>
 
-      {/* Remove button */}
+      {/* Drag handle — rightmost, only this element triggers dragging */}
       <button
-        onClick={onRequestRemove}
-        className="ml-1 shrink-0 text-destructive transition-colors hover:text-destructive/80"
-        aria-label={`Remove ${name}`}
+        {...attributes}
+        {...listeners}
+        className="shrink-0 cursor-grab touch-none text-muted-foreground hover:text-foreground active:cursor-grabbing"
+        aria-label={`Drag to reorder ${name}`}
       >
-        <X className="h-4 w-4" />
+        <GripVertical className="h-4 w-4" />
       </button>
     </div>
   );
@@ -308,7 +308,7 @@ function SessionQueuePanel({
 
         {isExpanded && (
           <div className="scrollbar-dark mt-3 max-h-[40vh] space-y-1 overflow-y-auto">
-            {/* Completed exercises — read-only, greyed out */}
+            {/* Completed exercises — read-only, greyed out, check on right */}
             {exercises.slice(0, currentIndex).map((se, index) => {
               const name = getExerciseName(se);
               return (
@@ -316,9 +316,6 @@ function SessionQueuePanel({
                   key={`completed-${index}`}
                   className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm opacity-50"
                 >
-                  <span className="w-5 shrink-0 text-center">
-                    <Check className="h-4 w-4 text-muted-foreground" />
-                  </span>
                   <span className="min-w-0 flex-1 truncate text-foreground">{name}</span>
                   {se.actualSeconds != null ? (
                     <span className="shrink-0 text-xs text-muted-foreground">
@@ -334,19 +331,17 @@ function SessionQueuePanel({
                   >
                     Notes
                   </button>
+                  <Check className="h-4 w-4 shrink-0 text-muted-foreground" />
                 </div>
               );
             })}
 
-            {/* Current exercise — highlighted, locked */}
+            {/* Current exercise — highlighted, locked, play icon on right */}
             {(() => {
               const se = exercises[currentIndex];
               const name = getExerciseName(se);
               return (
                 <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-sm">
-                  <span className="w-5 shrink-0 text-center">
-                    <Play className="h-4 w-4 fill-primary text-primary" />
-                  </span>
                   <span className="min-w-0 flex-1 truncate font-medium text-primary">{name}</span>
                   <span className="shrink-0 text-xs text-muted-foreground">
                     {se.duration}m
@@ -354,6 +349,7 @@ function SessionQueuePanel({
                       ~{formatTime(currentExerciseEndTime)}
                     </span>
                   </span>
+                  <Play className="h-4 w-4 shrink-0 fill-primary text-primary" />
                 </div>
               );
             })()}
