@@ -155,7 +155,7 @@ function ExerciseFormDialog({
     };
 
     onSave(exercise);
-    if (prefillExercise && hideOriginal) {
+    if (!isEditing && prefillExercise && hideOriginal) {
       onHideOriginal?.();
     }
   }

@@ -57,9 +57,19 @@ interface DialogContentProps extends React.ComponentPropsWithoutRef<
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- forwardRef requires the param; sheetRef is used instead
->(({ className, children, onSwipeDismiss, ...props }, _ref) => {
+>(({ className, children, onSwipeDismiss, ...props }, forwardedRef) => {
   const { sheetRef, touchHandlers } = useSheetDismiss(onSwipeDismiss);
+
+  // Merge the forwarded ref (for external consumers) with the internal
+  // sheetRef (for swipe-to-dismiss). Both need access to the same DOM node.
+  const mergedRef = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      sheetRef.current = node;
+      if (typeof forwardedRef === 'function') forwardedRef(node);
+      else if (forwardedRef) forwardedRef.current = node;
+    },
+    [forwardedRef, sheetRef],
+  );
 
   return (
     <DialogPortal>
@@ -67,7 +77,7 @@ const DialogContent = React.forwardRef<
       {/* Flex container: items-end on mobile (bottom sheet), items-center on desktop (centered) */}
       <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
         <DialogPrimitive.Content
-          ref={sheetRef}
+          ref={mergedRef}
           className={cn(
             // Base: full-width sheet with top-rounded corners, slide-up entry.
             // pt-0 on mobile because the drag handle provides all top spacing.
