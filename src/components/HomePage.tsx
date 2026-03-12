@@ -16,9 +16,9 @@
  *   one-way data flow.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Star, Clock, PenLine } from 'lucide-react';
+import { Star, Clock, PenLine, ArrowUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSession } from '../context/SessionContext';
 import { useExerciseFilter } from '../hooks/useExerciseFilter';
@@ -64,10 +64,22 @@ function HomePage() {
     );
   }, [setSearchParams]);
 
-  // STATE: custom exercise create/edit/delete
+  // Scroll-to-top: show a floating button once the user scrolls past the
+  // filter bar so they can jump back without a long swipe on mobile.
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const handleScroll = useCallback(() => {
+    setShowScrollTop(window.scrollY > 400);
+  }, []);
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+
+  // STATE: custom exercise create/edit/delete/copy
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
   const [deletingExercise, setDeletingExercise] = useState<Exercise | null>(null);
+  const [copyingExercise, setCopyingExercise] = useState<Exercise | null>(null);
 
   return (
     <div className="flex flex-col gap-8">
@@ -81,6 +93,9 @@ function HomePage() {
         searchText={exerciseFilter.searchText}
         onSearchChange={exerciseFilter.setSearchText}
         idPrefix="home"
+        hiddenCount={exerciseFilter.hiddenCount}
+        showHidden={exerciseFilter.showHidden}
+        onToggleShowHidden={exerciseFilter.toggleShowHidden}
       >
         {/* Action buttons rendered in the header row */}
         <div className="flex items-center gap-2">
@@ -114,6 +129,7 @@ function HomePage() {
         <ExerciseList
           exercises={exerciseFilter.sorted}
           favoriteIds={favoriteIds}
+          hiddenIds={state.hiddenExerciseIds}
           selectedExercise={selectedExercise}
           onSelectExercise={setSelectedExercise}
           onToggleFavorite={(id) => {
@@ -121,6 +137,12 @@ function HomePage() {
             dispatch({ type: 'TOGGLE_FAVORITE_EXERCISE', exerciseId: id });
             toast(wasFavorite ? 'Removed from favorites' : 'Added to favorites');
           }}
+          onToggleHidden={(id) => {
+            const wasHidden = state.hiddenExerciseIds.includes(id);
+            dispatch({ type: 'TOGGLE_HIDDEN_EXERCISE', exerciseId: id });
+            toast(wasHidden ? 'Exercise unhidden' : 'Exercise hidden');
+          }}
+          onCopyAsCustom={(exercise) => setCopyingExercise(exercise)}
           onEditExercise={(exercise) => setEditingExercise(exercise)}
           onDeleteExercise={(exercise) => setDeletingExercise(exercise)}
         />
@@ -153,6 +175,25 @@ function HomePage() {
         />
       )}
 
+      {/* Copy-as-custom dialog — pre-fills form from sourced exercise, saves as new custom */}
+      {copyingExercise && (
+        <ExerciseFormDialog
+          open={!!copyingExercise}
+          onClose={() => setCopyingExercise(null)}
+          prefillExercise={copyingExercise}
+          onSave={(exercise) => {
+            dispatch({ type: 'ADD_CUSTOM_EXERCISE', exercise });
+            setCopyingExercise(null);
+            toast(`Saved custom copy "${exercise.name}"`);
+          }}
+          onHideOriginal={() => {
+            if (!state.hiddenExerciseIds.includes(copyingExercise.id)) {
+              dispatch({ type: 'TOGGLE_HIDDEN_EXERCISE', exerciseId: copyingExercise.id });
+            }
+          }}
+        />
+      )}
+
       {/* Delete exercise confirmation */}
       {deletingExercise && (
         <ConfirmModal
@@ -168,6 +209,21 @@ function HomePage() {
           onCancel={() => setDeletingExercise(null)}
         />
       )}
+
+      {/* Floating scroll-to-top button — appears after scrolling past the filter bar.
+          Positioned above the bottom nav on mobile (bottom-20), higher on desktop (bottom-8). */}
+      <button
+        type="button"
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        className={`fixed bottom-20 right-4 z-40 rounded-full border border-border bg-card p-3 text-muted-foreground shadow-lg transition-all duration-200 hover:text-foreground sm:bottom-8 ${
+          showScrollTop
+            ? 'translate-y-0 opacity-100'
+            : 'pointer-events-none translate-y-4 opacity-0'
+        }`}
+        aria-label="Scroll to top"
+      >
+        <ArrowUp className="h-5 w-5" />
+      </button>
     </div>
   );
 }

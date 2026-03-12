@@ -36,16 +36,23 @@ interface ExerciseCardProps {
   onClick?: () => void; // Optional click handler - passed from parent
   isFavorite?: boolean; // Whether this exercise is starred
   onToggleFavorite?: () => void; // Toggle star on/off
+  isHidden?: boolean; // Whether this exercise has been hidden
 }
 
 // Functional component - using shadcn components
-function ExerciseCard({ exercise, onClick, isFavorite, onToggleFavorite }: ExerciseCardProps) {
+function ExerciseCard({
+  exercise,
+  onClick,
+  isFavorite,
+  onToggleFavorite,
+  isHidden,
+}: ExerciseCardProps) {
   return (
     <Card
-      className="flex cursor-pointer flex-col transition-all duration-200 hover:-translate-y-1 hover:border-primary hover:shadow-lg hover:shadow-primary/30"
+      className={`flex cursor-pointer flex-col transition-all duration-200 hover:-translate-y-1 hover:border-primary hover:shadow-lg hover:shadow-primary/30 ${isHidden ? 'opacity-40' : ''}`}
       onClick={onClick}
     >
-      <CardHeader>
+      <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex min-w-0 items-center gap-2">
             <CardTitle className="truncate text-primary hover:underline">{exercise.name}</CardTitle>
@@ -56,12 +63,15 @@ function ExerciseCard({ exercise, onClick, isFavorite, onToggleFavorite }: Exerc
             )}
           </div>
           {onToggleFavorite && (
+            // p-1.5 expands the tap target to ~32px — closer to the 44px mobile guideline
+            // without bloating the layout
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleFavorite();
               }}
-              className="ml-2 shrink-0 text-lg transition-colors"
+              className="ml-2 shrink-0 p-1.5 transition-colors"
               aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             >
@@ -74,13 +84,18 @@ function ExerciseCard({ exercise, onClick, isFavorite, onToggleFavorite }: Exerc
           )}
         </div>
       </CardHeader>
-      <CardContent className="flex-1 space-y-4">
-        <p className="leading-relaxed text-secondary-foreground">{exercise.summary}</p>
+      <CardContent className="flex-1 space-y-3 pt-0">
+        {/* line-clamp-3 caps the preview so cards stay uniform height on mobile */}
+        {exercise.summary && (
+          <p className="line-clamp-3 text-sm leading-relaxed text-secondary-foreground">
+            {exercise.summary}
+          </p>
+        )}
 
         {/* Tags */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           {exercise.tags.map((tag) => (
-            <Badge key={tag} variant="outline" className="border-input text-primary">
+            <Badge key={tag} variant="outline" className="border-input text-xs text-primary">
               {tag}
             </Badge>
           ))}

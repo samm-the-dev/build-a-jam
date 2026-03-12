@@ -63,6 +63,8 @@ export function useExerciseFilter() {
   const [selectedSource, setSelectedSource] = useState<SourceFilter>('all');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchText, setSearchText] = useState('');
+  // When true, hidden exercises are shown (dimmed) instead of filtered out
+  const [showHidden, setShowHidden] = useState(false);
 
   // Sync custom exercises to module state BEFORE useMemo runs.
   // The SessionProvider also does this in a useEffect, but effects run AFTER render.
@@ -96,10 +98,26 @@ export function useExerciseFilter() {
   );
 
   // useMemo: favorites sort only changes when filtered list or favorites change
-  const sorted = useMemo(
+  const sortedAll = useMemo(
     () => sortByFavorites(filtered, state.favoriteExerciseIds),
     [filtered, state.favoriteExerciseIds],
   );
+
+  // Count hidden exercises that match the current filter (before hiding them).
+  // Exposed so the UI can show "X hidden" and offer a toggle.
+  const hiddenCount = useMemo(
+    () => sortedAll.filter((ex) => state.hiddenExerciseIds.includes(ex.id)).length,
+    [sortedAll, state.hiddenExerciseIds],
+  );
+
+  // When showHidden is off, exclude hidden exercises from the results.
+  const sorted = useMemo(
+    () =>
+      showHidden ? sortedAll : sortedAll.filter((ex) => !state.hiddenExerciseIds.includes(ex.id)),
+    [sortedAll, showHidden, state.hiddenExerciseIds],
+  );
+
+  const toggleShowHidden = useCallback(() => setShowHidden((prev) => !prev), []);
 
   // useCallback: stable function reference for source changes.
   // If ExerciseFilterBar were wrapped in React.memo, passing a new function
@@ -128,5 +146,8 @@ export function useExerciseFilter() {
     allTags,
     filtered,
     sorted,
+    hiddenCount,
+    showHidden,
+    toggleShowHidden,
   };
 }

@@ -6,3 +6,4 @@
 - [ ] Set up subdomain (e.g., buildajam.samm-the.dev or jam.samm-the.dev)
 - [ ] Add Google Drive integration
 - [ ] Session plan sharing (needs design: export to text/PDF, deep link, or send-to-phone)
+- [ ] In-app feedback mechanism — let testers fire off quick thoughts during use (e.g. email, form, or simple text submission)

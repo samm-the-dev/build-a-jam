@@ -21,7 +21,7 @@
  *    without the filter bar needing to know about them.
  */
 
-import { X } from 'lucide-react';
+import { EyeOff, X } from 'lucide-react';
 import TagFilter from './TagFilter';
 import { sourceCounts } from '../data/exercises';
 import type { SourceFilter } from '../data/exercises';
@@ -44,6 +44,11 @@ interface ExerciseFilterBarProps {
   /** Unique prefix for HTML ids (avoids duplicate ids when two instances exist) */
   idPrefix?: string;
 
+  /** Hidden exercises — show count and toggle when any are hidden */
+  hiddenCount?: number;
+  showHidden?: boolean;
+  onToggleShowHidden?: () => void;
+
   /** Optional content rendered to the right of the source dropdown (action buttons, etc.) */
   children?: React.ReactNode;
 }
@@ -58,6 +63,9 @@ function ExerciseFilterBar({
   searchText,
   onSearchChange,
   idPrefix = 'filter',
+  hiddenCount = 0,
+  showHidden = false,
+  onToggleShowHidden,
   children,
 }: ExerciseFilterBarProps) {
   const sourceId = `${idPrefix}-source`;
@@ -121,6 +129,18 @@ function ExerciseFilterBar({
           )}
         </div>
       </div>
+
+      {/* Show hidden toggle — only visible when exercises have been hidden */}
+      {hiddenCount > 0 && onToggleShowHidden && (
+        <button
+          type="button"
+          onClick={onToggleShowHidden}
+          className="flex items-center gap-1.5 self-start text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <EyeOff className="h-4 w-4" />
+          {showHidden ? `Hide ${hiddenCount} hidden` : `Show ${hiddenCount} hidden`}
+        </button>
+      )}
     </div>
   );
 }

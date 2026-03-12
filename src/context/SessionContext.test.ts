@@ -26,7 +26,19 @@ import {
   type _TestSessionState as SessionState,
   type _TestTimerState as TimerState,
 } from './SessionContext';
-import type { Session } from '../types';
+import type { Exercise, Session } from '../types';
+
+// Helper to create a mock exercise
+function mockExercise(overrides: Partial<Exercise> = {}): Exercise {
+  return {
+    id: 'custom:test-ex',
+    name: 'Test Exercise',
+    tags: [],
+    description: '',
+    isCustom: true,
+    ...overrides,
+  };
+}
 
 // Helper to create a mock session
 function mockSession(overrides: Partial<Session> = {}): Session {
@@ -254,6 +266,143 @@ describe('sessionReducer', () => {
       const newState = reducer(state, { type: 'NEXT_EXERCISE' });
 
       expect(newState.currentExerciseIndex).toBeNull();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // TOGGLE_HIDDEN_EXERCISE
+  // -------------------------------------------------------------------------
+  describe('TOGGLE_HIDDEN_EXERCISE', () => {
+    it('adds exercise to hidden list when not hidden', () => {
+      const state = reducer(initialState, {
+        type: 'TOGGLE_HIDDEN_EXERCISE',
+        exerciseId: 'ex1',
+      });
+
+      expect(state.hiddenExerciseIds).toContain('ex1');
+    });
+
+    it('removes exercise from hidden list when already hidden', () => {
+      const state: SessionState = {
+        ...initialState,
+        hiddenExerciseIds: ['ex1', 'ex2'],
+      };
+
+      const newState = reducer(state, {
+        type: 'TOGGLE_HIDDEN_EXERCISE',
+        exerciseId: 'ex1',
+      });
+
+      expect(newState.hiddenExerciseIds).not.toContain('ex1');
+      expect(newState.hiddenExerciseIds).toContain('ex2');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // ADD_CUSTOM_EXERCISE
+  // -------------------------------------------------------------------------
+  describe('ADD_CUSTOM_EXERCISE', () => {
+    const customExercise = mockExercise({ id: 'custom:test-ex-abc1', tags: ['warm-up'] });
+
+    it('adds a custom exercise to the list', () => {
+      const state = reducer(initialState, {
+        type: 'ADD_CUSTOM_EXERCISE',
+        exercise: customExercise,
+      });
+
+      expect(state.customExercises).toHaveLength(1);
+      expect(state.customExercises[0].id).toBe('custom:test-ex-abc1');
+    });
+
+    it('appends to existing custom exercises', () => {
+      const state: SessionState = {
+        ...initialState,
+        customExercises: [mockExercise({ id: 'custom:existing', name: 'Existing' })],
+      };
+
+      const newState = reducer(state, {
+        type: 'ADD_CUSTOM_EXERCISE',
+        exercise: customExercise,
+      });
+
+      expect(newState.customExercises).toHaveLength(2);
+      expect(newState.customExercises[1].id).toBe('custom:test-ex-abc1');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // UPDATE_CUSTOM_EXERCISE
+  // -------------------------------------------------------------------------
+  describe('UPDATE_CUSTOM_EXERCISE', () => {
+    it('updates an existing custom exercise by ID', () => {
+      const state: SessionState = {
+        ...initialState,
+        customExercises: [mockExercise({ id: 'custom:ex1', name: 'Original', tags: ['warm-up'] })],
+      };
+
+      const newState = reducer(state, {
+        type: 'UPDATE_CUSTOM_EXERCISE',
+        exercise: mockExercise({ id: 'custom:ex1', name: 'Updated', tags: ['focus'] }),
+      });
+
+      expect(newState.customExercises).toHaveLength(1);
+      expect(newState.customExercises[0].name).toBe('Updated');
+      expect(newState.customExercises[0].tags).toEqual(['focus']);
+    });
+
+    it('leaves other exercises unchanged', () => {
+      const state: SessionState = {
+        ...initialState,
+        customExercises: [
+          mockExercise({ id: 'custom:ex1', name: 'First' }),
+          mockExercise({ id: 'custom:ex2', name: 'Second' }),
+        ],
+      };
+
+      const newState = reducer(state, {
+        type: 'UPDATE_CUSTOM_EXERCISE',
+        exercise: mockExercise({ id: 'custom:ex1', name: 'Updated' }),
+      });
+
+      expect(newState.customExercises[0].name).toBe('Updated');
+      expect(newState.customExercises[1].name).toBe('Second');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // DELETE_CUSTOM_EXERCISE
+  // -------------------------------------------------------------------------
+  describe('DELETE_CUSTOM_EXERCISE', () => {
+    it('removes the exercise from customExercises', () => {
+      const state: SessionState = {
+        ...initialState,
+        customExercises: [mockExercise({ id: 'custom:ex1' })],
+      };
+
+      const newState = reducer(state, {
+        type: 'DELETE_CUSTOM_EXERCISE',
+        exerciseId: 'custom:ex1',
+      });
+
+      expect(newState.customExercises).toHaveLength(0);
+    });
+
+    it('also removes from favorites and hidden lists', () => {
+      const state: SessionState = {
+        ...initialState,
+        customExercises: [mockExercise({ id: 'custom:ex1' })],
+        favoriteExerciseIds: ['custom:ex1', 'other-ex'],
+        hiddenExerciseIds: ['custom:ex1'],
+      };
+
+      const newState = reducer(state, {
+        type: 'DELETE_CUSTOM_EXERCISE',
+        exerciseId: 'custom:ex1',
+      });
+
+      expect(newState.customExercises).toHaveLength(0);
+      expect(newState.favoriteExerciseIds).toEqual(['other-ex']);
+      expect(newState.hiddenExerciseIds).toEqual([]);
     });
   });
 });

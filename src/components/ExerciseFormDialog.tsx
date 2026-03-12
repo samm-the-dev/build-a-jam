@@ -44,8 +44,20 @@ interface ExerciseFormDialogProps {
   open: boolean;
   onClose: () => void;
   onSave: (exercise: Exercise) => void;
-  /** If provided, we're editing this exercise (pre-fill fields) */
+  /** If provided, we're editing this exercise (pre-fill fields, preserve ID) */
   existingExercise?: Exercise;
+  /**
+   * If provided, pre-fill form fields from this exercise for a "copy as custom" flow.
+   * Unlike existingExercise, a new ID is generated on save so the original is untouched.
+   * The source attribution (sourceUrl) is carried over silently for proper attribution.
+   */
+  prefillExercise?: Exercise;
+  /**
+   * Called after save when the user has checked "hide original".
+   * Only relevant in copy mode (prefillExercise set). The parent should
+   * dispatch TOGGLE_HIDDEN_EXERCISE for prefillExercise.id.
+   */
+  onHideOriginal?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -77,16 +89,27 @@ function generateCustomId(name: string): string {
 // Component
 // ---------------------------------------------------------------------------
 
-function ExerciseFormDialog({ open, onClose, onSave, existingExercise }: ExerciseFormDialogProps) {
+function ExerciseFormDialog({
+  open,
+  onClose,
+  onSave,
+  existingExercise,
+  prefillExercise,
+  onHideOriginal,
+}: ExerciseFormDialogProps) {
   const isEditing = !!existingExercise;
+  // The source to pre-fill from: editing beats copy-prefill beats empty
+  const prefill = existingExercise ?? prefillExercise;
 
-  // Pre-fill from existing exercise when editing
-  // Note: description is now stored as HTML directly (Tiptap handles it natively)
-  const [name, setName] = useState(existingExercise?.name ?? '');
-  const [description, setDescription] = useState(existingExercise?.description ?? '');
-  const [tags, setTags] = useState<string[]>(existingExercise?.tags ?? []);
-  const [summary, setSummary] = useState(existingExercise?.summary ?? '');
+  // Pre-fill from existing exercise when editing, or from source exercise when copying.
+  const [name, setName] = useState(prefill?.name ?? '');
+  const [description, setDescription] = useState(prefill?.description ?? '');
+  const [tags, setTags] = useState<string[]>(prefill?.tags ?? []);
+  const [summary, setSummary] = useState(prefill?.summary ?? '');
   const [error, setError] = useState('');
+  // In copy mode: offer to hide the original so it stops appearing in the list.
+  // Default on — the most common reason to copy is to replace it with your version.
+  const [hideOriginal, setHideOriginal] = useState(true);
 
   // Get all available tags from the exercise library for autocomplete
   const availableTags = useMemo(() => {
@@ -120,15 +143,21 @@ function ExerciseFormDialog({ open, onClose, onSave, existingExercise }: Exercis
     const exercise: Exercise = {
       // Keep existing ID on edit — changing IDs would break favorites, session history,
       // and template references. The random suffix prevents collisions even if names change.
+      // For copies (prefillExercise), generate a fresh ID so the original is untouched.
       id: existingExercise?.id ?? generateCustomId(trimmedName),
       name: trimmedName,
       tags, // Already an array from TagInput
       description, // Tiptap outputs HTML directly
       summary: summary.trim() || undefined,
       isCustom: true,
+      // Carry over source attribution when copying a sourced exercise
+      sourceUrl: existingExercise?.sourceUrl ?? prefillExercise?.sourceUrl,
     };
 
     onSave(exercise);
+    if (!isEditing && prefillExercise && hideOriginal) {
+      onHideOriginal?.();
+    }
   }
 
   return (
@@ -138,13 +167,17 @@ function ExerciseFormDialog({ open, onClose, onSave, existingExercise }: Exercis
         if (!isOpen) onClose();
       }}
     >
-      <DialogContent className="max-w-lg bg-card">
+      <DialogContent onSwipeDismiss={onClose} className="max-w-2xl bg-card">
         <DialogHeader>
           <DialogTitle className="text-foreground">
-            {isEditing ? 'Edit Exercise' : 'Create Exercise'}
+            {isEditing ? 'Edit Exercise' : prefillExercise ? 'Copy as Custom' : 'Create Exercise'}
           </DialogTitle>
           <DialogDescription>
-            {isEditing ? 'Update your custom exercise.' : 'Add your own exercise to the library.'}
+            {isEditing
+              ? 'Update your custom exercise.'
+              : prefillExercise
+                ? `Customise a copy of "${prefillExercise.name}".`
+                : 'Add your own exercise to the library.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -168,6 +201,7 @@ function ExerciseFormDialog({ open, onClose, onSave, existingExercise }: Exercis
               placeholder="e.g., Zip Zap Zop"
               className="w-full rounded-lg border border-input bg-secondary px-3 py-2 text-sm text-foreground placeholder-muted-foreground transition-colors focus:border-primary focus:outline-none"
               autoComplete="off"
+              data-form-type="other"
               autoFocus // eslint-disable-line jsx-a11y/no-autofocus -- dialog just opened
             />
           </div>
@@ -188,6 +222,7 @@ function ExerciseFormDialog({ open, onClose, onSave, existingExercise }: Exercis
               placeholder="Brief one-liner about what the exercise does"
               className="w-full rounded-lg border border-input bg-secondary px-3 py-2 text-sm text-foreground placeholder-muted-foreground transition-colors focus:border-primary focus:outline-none"
               autoComplete="off"
+              data-form-type="other"
             />
           </div>
 
@@ -222,11 +257,24 @@ function ExerciseFormDialog({ open, onClose, onSave, existingExercise }: Exercis
           {/* Error message */}
           {error && <p className="text-sm text-destructive">{error}</p>}
 
-          <DialogFooter>
+          {/* Hide original — only shown in copy mode */}
+          {prefillExercise && (
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
+              <input
+                type="checkbox"
+                checked={hideOriginal}
+                onChange={(e) => setHideOriginal(e.target.checked)}
+                className="h-4 w-4 accent-primary"
+              />
+              Hide original ("{prefillExercise.name}") from the list
+            </label>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button type="submit">{isEditing ? 'Save Changes' : 'Create Exercise'}</Button>
             <Button type="button" variant="secondary" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit">{isEditing ? 'Save Changes' : 'Create Exercise'}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

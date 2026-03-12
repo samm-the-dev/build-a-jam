@@ -21,7 +21,7 @@ export default defineConfig({
       manifest: {
         name: 'Build-a-Jam',
         short_name: 'Build-a-Jam',
-        description: 'Session planner for improv warm-ups and exercises',
+        description: 'Find and organize improv exercises for practice sessions',
         theme_color: '#1a1a1a',
         background_color: '#1a1a1a',
         display: 'standalone',

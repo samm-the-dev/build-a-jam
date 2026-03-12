@@ -43,7 +43,17 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ChevronDown, ChevronUp, Check, Play, Coffee, Plus, X, GripVertical } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronUp,
+  Check,
+  Play,
+  Coffee,
+  Minus,
+  Plus,
+  X,
+  GripVertical,
+} from 'lucide-react';
 import type { SessionExercise } from '../types';
 import { BREAK_EXERCISE_ID, getExerciseName, formatDuration } from '../data/exercises';
 import { type ConfirmConfig, confirmRemove } from '../lib/confirmations';
@@ -137,17 +147,29 @@ function SortableQueueItem({
       {/* Exercise name */}
       <span className="min-w-0 flex-1 truncate text-foreground">{name}</span>
 
-      {/* Duration edit */}
-      <div className="flex shrink-0 items-center gap-1">
-        <input
-          type="number"
-          min={1}
-          max={60}
-          value={se.duration}
-          onChange={(e) => onDurationChange(index, Math.max(1, Number(e.target.value)))}
-          aria-label={`Duration for ${name} in minutes`}
-          className="w-12 rounded border border-input bg-secondary px-1 py-0.5 text-center text-xs text-foreground"
-        />
+      {/* Duration stepper */}
+      <div className="flex shrink-0 items-center gap-0.5">
+        <button
+          type="button"
+          onClick={() => onDurationChange(index, Math.max(1, se.duration - 1))}
+          disabled={se.duration <= 1}
+          className="rounded border border-input bg-secondary p-0.5 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+          aria-label={`Decrease duration for ${name}`}
+        >
+          <Minus className="h-3 w-3" />
+        </button>
+        <span className="min-w-[3ch] text-center text-xs font-medium text-foreground">
+          {se.duration}
+        </span>
+        <button
+          type="button"
+          onClick={() => onDurationChange(index, Math.min(60, se.duration + 1))}
+          disabled={se.duration >= 60}
+          className="rounded border border-input bg-secondary p-0.5 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+          aria-label={`Increase duration for ${name}`}
+        >
+          <Plus className="h-3 w-3" />
+        </button>
         <span className="text-xs text-muted-foreground">m</span>
       </div>
 

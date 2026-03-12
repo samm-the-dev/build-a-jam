@@ -38,6 +38,7 @@ const STORAGE_KEYS = {
   COMPLETED_SESSIONS: 'completed-sessions',
   FAVORITE_EXERCISE_IDS: 'favorite-exercise-ids',
   CUSTOM_EXERCISES: 'custom-exercises',
+  HIDDEN_EXERCISE_IDS: 'hidden-exercise-ids',
 } as const;
 
 // Runtime session state (exercise index, timer) lives in sessionStorage
@@ -104,6 +105,8 @@ interface SessionState {
   completedSessions: CompletedSession[];
   /** IDs of individually-starred exercises */
   favoriteExerciseIds: string[];
+  /** IDs of exercises the user has hidden (anti-favorite) */
+  hiddenExerciseIds: string[];
   /** User-created exercises (persisted to storage, synced to exercises.ts) */
   customExercises: Exercise[];
   /** Whether initial load from storage has finished */
@@ -119,6 +122,7 @@ const initialState: SessionState = {
   sessions: [],
   completedSessions: [],
   favoriteExerciseIds: [],
+  hiddenExerciseIds: [],
   customExercises: [],
   loaded: false,
 };
@@ -134,6 +138,7 @@ type SessionAction =
       completedSessions: CompletedSession[];
       currentSession: Session | null;
       favoriteExerciseIds: string[];
+      hiddenExerciseIds: string[];
       customExercises: Exercise[];
     }
   | { type: 'CREATE_SESSION'; name?: string }
@@ -163,7 +168,8 @@ type SessionAction =
   | { type: 'TIMER_RESET' }
   | { type: 'ADD_CUSTOM_EXERCISE'; exercise: Exercise }
   | { type: 'UPDATE_CUSTOM_EXERCISE'; exercise: Exercise }
-  | { type: 'DELETE_CUSTOM_EXERCISE'; exerciseId: string };
+  | { type: 'DELETE_CUSTOM_EXERCISE'; exerciseId: string }
+  | { type: 'TOGGLE_HIDDEN_EXERCISE'; exerciseId: string };
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -302,6 +308,7 @@ function sessionReducer(state: SessionState, action: SessionAction): SessionStat
         completedSessions: action.completedSessions,
         currentSession: hydratedSession,
         favoriteExerciseIds: action.favoriteExerciseIds,
+        hiddenExerciseIds: action.hiddenExerciseIds ?? [],
         customExercises: action.customExercises ?? [],
         // Restore runtime state if we have an active session
         currentExerciseIndex: hasActiveSession && runtime ? runtime.currentExerciseIndex : null,
@@ -671,9 +678,21 @@ function sessionReducer(state: SessionState, action: SessionAction): SessionStat
       return {
         ...state,
         customExercises: state.customExercises.filter((ex) => ex.id !== action.exerciseId),
-        // Also remove from favorites if it was starred
+        // Also remove from favorites and hidden if starred or hidden
         favoriteExerciseIds: state.favoriteExerciseIds.filter((id) => id !== action.exerciseId),
+        hiddenExerciseIds: state.hiddenExerciseIds.filter((id) => id !== action.exerciseId),
       };
+
+    case 'TOGGLE_HIDDEN_EXERCISE': {
+      const ids = state.hiddenExerciseIds;
+      const exists = ids.includes(action.exerciseId);
+      return {
+        ...state,
+        hiddenExerciseIds: exists
+          ? ids.filter((id) => id !== action.exerciseId)
+          : [...ids, action.exerciseId],
+      };
+    }
 
     // TIMER ACTIONS — delegated to the timer sub-reducer.
     //
@@ -725,20 +744,28 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   // Load persisted state on mount
   useEffect(() => {
     async function hydrate() {
-      const [sessions, completedSessions, currentSession, favoriteExerciseIds, customExercises] =
-        await Promise.all([
-          storage.load<Session[]>(STORAGE_KEYS.SESSIONS),
-          storage.load<CompletedSession[]>(STORAGE_KEYS.COMPLETED_SESSIONS),
-          storage.load<Session>(STORAGE_KEYS.CURRENT_SESSION),
-          storage.load<string[]>(STORAGE_KEYS.FAVORITE_EXERCISE_IDS),
-          storage.load<Exercise[]>(STORAGE_KEYS.CUSTOM_EXERCISES),
-        ]);
+      const [
+        sessions,
+        completedSessions,
+        currentSession,
+        favoriteExerciseIds,
+        hiddenExerciseIds,
+        customExercises,
+      ] = await Promise.all([
+        storage.load<Session[]>(STORAGE_KEYS.SESSIONS),
+        storage.load<CompletedSession[]>(STORAGE_KEYS.COMPLETED_SESSIONS),
+        storage.load<Session>(STORAGE_KEYS.CURRENT_SESSION),
+        storage.load<string[]>(STORAGE_KEYS.FAVORITE_EXERCISE_IDS),
+        storage.load<string[]>(STORAGE_KEYS.HIDDEN_EXERCISE_IDS),
+        storage.load<Exercise[]>(STORAGE_KEYS.CUSTOM_EXERCISES),
+      ]);
       dispatch({
         type: 'HYDRATE',
         sessions: sessions ?? [],
         completedSessions: completedSessions ?? [],
         currentSession: currentSession ?? null,
         favoriteExerciseIds: favoriteExerciseIds ?? [],
+        hiddenExerciseIds: hiddenExerciseIds ?? [],
         customExercises: customExercises ?? [],
       });
     }
@@ -751,6 +778,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     void storage.save(STORAGE_KEYS.SESSIONS, state.sessions);
     void storage.save(STORAGE_KEYS.COMPLETED_SESSIONS, state.completedSessions);
     void storage.save(STORAGE_KEYS.FAVORITE_EXERCISE_IDS, state.favoriteExerciseIds);
+    void storage.save(STORAGE_KEYS.HIDDEN_EXERCISE_IDS, state.hiddenExerciseIds);
     void storage.save(STORAGE_KEYS.CUSTOM_EXERCISES, state.customExercises);
     if (state.currentSession) {
       void storage.save(STORAGE_KEYS.CURRENT_SESSION, state.currentSession);
@@ -762,6 +790,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     state.completedSessions,
     state.currentSession,
     state.favoriteExerciseIds,
+    state.hiddenExerciseIds,
     state.customExercises,
     state.loaded,
     storage,

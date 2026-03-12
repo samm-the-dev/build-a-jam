@@ -34,6 +34,11 @@ interface ExerciseListProps {
   exercises: Exercise[];
   favoriteIds?: string[];
   onToggleFavorite?: (id: string) => void;
+  /** IDs of exercises the user has hidden */
+  hiddenIds?: string[];
+  onToggleHidden?: (id: string) => void;
+  /** Called when user wants to copy a sourced exercise as custom */
+  onCopyAsCustom?: (exercise: Exercise) => void;
   /** Called when user wants to edit a custom exercise from the detail modal */
   onEditExercise?: (exercise: Exercise) => void;
   /** Called when user wants to delete a custom exercise from the detail modal */
@@ -57,6 +62,9 @@ function ExerciseList({
   exercises,
   favoriteIds,
   onToggleFavorite,
+  hiddenIds,
+  onToggleHidden,
+  onCopyAsCustom,
   onEditExercise,
   onDeleteExercise,
   selectedExercise: controlledSelected,
@@ -92,6 +100,7 @@ function ExerciseList({
             onClick={() => setSelectedExercise(exercise)}
             isFavorite={favoriteIds?.includes(exercise.id)}
             onToggleFavorite={onToggleFavorite ? () => onToggleFavorite(exercise.id) : undefined}
+            isHidden={hiddenIds?.includes(exercise.id)}
           />
         ))}
       </div>
@@ -119,6 +128,17 @@ function ExerciseList({
                 }
               : undefined
           }
+          onCopyAsCustom={
+            !selectedExercise.isCustom && onCopyAsCustom
+              ? () => {
+                  const ex = selectedExercise;
+                  setSelectedExercise(null);
+                  onCopyAsCustom(ex);
+                }
+              : undefined
+          }
+          isHidden={hiddenIds?.includes(selectedExercise.id)}
+          onToggleHidden={onToggleHidden ? () => onToggleHidden(selectedExercise.id) : undefined}
         />
       )}
     </>
