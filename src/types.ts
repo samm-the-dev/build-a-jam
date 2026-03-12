@@ -19,7 +19,8 @@ export interface Exercise {
   id: string;
   name: string;
   tags: string[]; // normalized tags (lowercase, deduplicated, filtered)
-  description: string; // cleaned HTML (safe to render)
+  description: string; // concise AI-generated description (HTML or plain text)
+  descriptionOriginal?: string; // full scraped description (cleaned HTML)
   description_raw?: string; // original HTML from source (before cleaning)
   summary?: string; // 1-2 line summary for quick scanning (optional)
   alternativeNames?: string[]; // other names this exercise goes by

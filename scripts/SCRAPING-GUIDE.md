@@ -313,3 +313,103 @@ When reviewing scraped data, watch for:
 - Same exercise under different names
 - Check `alternativeNames` field for known synonyms
 - **Handle manually** if discovered (merge entries, update IDs)
+
+---
+
+## AI-Generated Concise Descriptions
+
+Scraped exercise descriptions are verbose (median ~1000-1600 chars, some 5000+)
+and poorly formatted for mobile. The `generate-descriptions.mjs` script uses
+Claude to rewrite them into concise, mobile-friendly versions while preserving
+the original text.
+
+### How it works
+
+**Field layout on Exercise:**
+
+| Field                 | Content                                            |
+| --------------------- | -------------------------------------------------- |
+| `description`         | Concise AI-generated description (light HTML)      |
+| `descriptionOriginal` | Full scraped description (preserved for reference) |
+| `description_raw`     | Original HTML from source before cleaning          |
+
+The script renames `description` to `descriptionOriginal` (idempotent), then
+generates a new `description` using the Anthropic API.
+
+### Running the generator
+
+```bash
+# Rename only (no API calls) — useful to verify field layout
+node scripts/generate-descriptions.mjs --rename-only
+
+# Generate for all exercises (requires ANTHROPIC_API_KEY)
+node scripts/generate-descriptions.mjs --format html
+
+# Sample mode — generate 5 per source for review
+node scripts/generate-descriptions.mjs --sample --format both
+
+# Dry run — show what would be generated without calling the API
+node scripts/generate-descriptions.mjs --dry-run
+
+# Compare mode — write both plain and HTML to temporary fields for UI review
+node scripts/generate-descriptions.mjs --compare --sample
+```
+
+### Format chosen: Light HTML
+
+After comparing plain text and light HTML side by side in the app, light HTML
+was chosen for its scannability on mobile. The format is:
+
+- A brief intro sentence in a `<p>` tag
+- Key steps as a short `<ol>` or `<ul>` (3-5 items max)
+- Total length: 300-600 characters
+- Allowed tags: `<p>`, `<ol>`, `<ul>`, `<li>` only (sanitized)
+
+### Generation parameters
+
+| Parameter   | Value                       | Rationale                              |
+| ----------- | --------------------------- | -------------------------------------- |
+| Model       | `claude-haiku-4-5-20251001` | Fast, cheap (~$0.10 for 317 exercises) |
+| Temperature | 0.3                         | Consistent, factual output             |
+| Batch size  | 5 parallel requests         | Respects rate limits                   |
+| Batch delay | 1000ms                      | Avoids throttling                      |
+| Max tokens  | 1024                        | More than enough for concise output    |
+
+### What the prompt emphasizes
+
+The system prompt instructs the model to:
+
+1. **Preserve player formation and setup details** — circle, line, pairs, stage
+   positions, who leaves/enters the room, any special spatial arrangement. These
+   are critical for a session leader to run the exercise.
+2. **Not repeat the exercise name** — the app already displays it prominently.
+3. **Not duplicate the summary** — the app shows a separate one-line summary.
+4. **Use only allowed HTML tags** — output is sanitized as a safety belt.
+
+### Short description threshold
+
+Exercises with descriptions under 150 characters (plain text after stripping
+HTML) are kept as-is — they're already concise enough. This avoids AI-inflating
+already-brief descriptions.
+
+### Re-running after a re-scrape
+
+If exercises are re-scraped, descriptions will need regenerating:
+
+1. The scraper overwrites `description` and `description_raw`
+2. `descriptionOriginal` is NOT overwritten (it was renamed, not a scraper field)
+3. Run `generate-descriptions.mjs --format html` again
+4. The script detects `descriptionOriginal` already exists and skips the rename
+5. New AI descriptions are generated from the (now updated) `descriptionOriginal`
+
+**Caveat:** If a re-scrape adds new exercises, those won't have
+`descriptionOriginal` yet. The script handles this — it renames `description` to
+`descriptionOriginal` for any exercise that doesn't already have the field.
+
+### Licensing implications
+
+AI-rewritten descriptions are "adaptations" under CC BY-SA. The original
+content's license (CC BY-SA 4.0 for learnimprov, CC BY-SA 3.0 DE for improwiki)
+still applies. The `attribution.modified` field in each JSON file and
+`LICENSE-DATA` must note that descriptions were AI-rewritten. The original text
+is preserved in `descriptionOriginal` for attribution compliance.

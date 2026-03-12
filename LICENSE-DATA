@@ -28,6 +28,11 @@ Under the terms of this license:
   - NO ADDITIONAL RESTRICTIONS: You may not apply legal terms or technological
     measures that legally restrict others from doing anything the license permits.
 
+  - CHANGES MADE: Exercise descriptions were cleaned from raw HTML, tags were
+    normalized, and inferred tags were applied. Descriptions were AI-rewritten
+    into concise versions using Claude (Anthropic); original descriptions are
+    preserved in the descriptionOriginal field of each exercise.
+
 ===
 
 improwiki.com — CC BY-SA 3.0 DE
@@ -50,3 +55,8 @@ Under the terms of this license:
 
   - NO ADDITIONAL RESTRICTIONS: You may not apply legal terms or technological
     measures that legally restrict others from doing anything the license permits.
+
+  - CHANGES MADE: Exercise descriptions were cleaned from raw HTML, tags were
+    normalized, and inferred tags were applied. Descriptions were AI-rewritten
+    into concise versions using Claude (Anthropic); original descriptions are
+    preserved in the descriptionOriginal field of each exercise.
