@@ -50,16 +50,22 @@ When evaluating features, ask: "Does this help someone running a session on thei
 - Forms and controlled components
 - `useReducer` + Context for shared state management
 - Custom hooks (`useTemplateSaver`, `useTheme`, `useExerciseFilter`)
+- `useRef` (synchronous flags, DOM refs for gesture handling)
+- `useCallback` (stable callbacks in custom hooks)
 - React Router (routes, params, navigation)
 - localStorage persistence via async StorageProvider
-- Third-party library integration (shadcn/ui, Radix UI, Sonner)
+- Third-party library integration (shadcn/ui, Radix UI, Sonner, Tiptap)
 - Drag-and-drop with @dnd-kit (session queue reordering)
+- Imperative DOM manipulation (swipe-to-dismiss gesture via refs)
+- PWA features (install prompt, wake lock)
+- Web Share API with clipboard fallback
+- Testing with Vitest (unit tests for utilities)
 - Deployment pipeline (GitHub Actions → GitHub Pages)
 
 **Next topics to explore**:
 
-- `useRef`, `useMemo`, `useCallback` (performance optimization)
-- Testing (React Testing Library, Vitest)
+- `useMemo` (performance optimization)
+- Component testing (React Testing Library)
 
 ## Code Patterns & Conventions
 
@@ -69,47 +75,6 @@ When evaluating features, ask: "Does this help someone running a session on thei
 - **TypeScript interfaces** for all props
 - **Extensive comments** comparing Angular patterns to React equivalents
 - **Descriptive variable names** - prioritize clarity over brevity
-
-### File Organization
-
-```
-src/
-├── components/
-│   ├── ui/                      # shadcn/ui primitives (Button, Card, Badge, Dialog, AlertDialog, Sonner, TagButton)
-│   ├── HomePage.tsx             # Exercise browsing (source filter, tag filter, search)
-│   ├── PrepPage.tsx             # Session builder (add exercises, set durations, drag-and-drop reorder)
-│   ├── SessionPage.tsx          # Active session (timer, current exercise, live queue editing)
-│   ├── NotesPage.tsx            # Post-session reflections
-│   ├── HistoryPage.tsx          # Past sessions with save-as-template
-│   ├── FavoritesPage.tsx        # Starred exercises and saved templates
-│   ├── CreditsPage.tsx          # Licensing & attribution display
-│   ├── BottomNav.tsx            # Mobile bottom navigation bar
-│   ├── Footer.tsx               # Site-wide footer (credits link, GitHub link)
-│   ├── ExerciseCard.tsx         # Exercise card (shadcn Card + Badge)
-│   ├── ExerciseList.tsx         # Exercise grid
-│   ├── ExerciseFilterBar.tsx    # Source, tag, and text search filter controls
-│   ├── ExerciseDetailModal.tsx  # Full exercise detail (Radix Dialog)
-│   ├── ExerciseFormDialog.tsx   # Create/edit custom exercises (Radix Dialog)
-│   ├── ExercisePickerDialog.tsx # Browse & add exercises mid-session (Radix Dialog)
-│   ├── SessionQueuePanel.tsx    # Live session queue with drag-and-drop reorder
-│   ├── ConfirmModal.tsx         # Destructive action confirmation (Radix AlertDialog)
-│   └── TagFilter.tsx            # Tag chip filter with "show more"
-├── context/
-│   └── SessionContext.tsx       # Session state (useReducer + Context)
-├── hooks/
-│   ├── useExerciseFilter.ts     # Shared exercise filter pipeline (source, tag, search, sort)
-│   ├── useTemplateSaver.ts      # Shared template-saving logic
-│   └── useTheme.ts              # Light/dark theme toggle with localStorage
-├── lib/
-│   └── utils.ts                 # Utility functions (cn for className merging)
-├── storage/
-│   ├── StorageContext.tsx        # StorageProvider context + useStorage hook
-│   └── local-storage.ts         # localStorage implementation
-├── data/                        # Exercise data files (JSON + TS module + inferred-tags.json)
-├── types.ts                     # Shared TypeScript types
-├── App.tsx                      # Layout shell + route definitions + providers
-└── main.tsx                     # Entry point (BrowserRouter lives here)
-```
 
 ### State Management Philosophy
 
