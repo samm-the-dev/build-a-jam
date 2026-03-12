@@ -70,7 +70,10 @@ function ExercisePickerDialog({
           if (!isOpen) onClose();
         }}
       >
-        <DialogContent className="flex max-h-[85vh] max-w-2xl flex-col bg-card">
+        <DialogContent
+          onSwipeDismiss={onClose}
+          className="flex max-h-[85vh] max-w-2xl flex-col bg-card"
+        >
           <DialogHeader>
             <DialogTitle className="text-foreground">Add Exercise</DialogTitle>
             <DialogDescription>

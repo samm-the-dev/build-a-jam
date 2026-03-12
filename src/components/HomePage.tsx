@@ -16,9 +16,9 @@
  *   one-way data flow.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Star, Clock, PenLine } from 'lucide-react';
+import { Star, Clock, PenLine, ArrowUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSession } from '../context/SessionContext';
 import { useExerciseFilter } from '../hooks/useExerciseFilter';
@@ -63,6 +63,17 @@ function HomePage() {
       { replace: true },
     );
   }, [setSearchParams]);
+
+  // Scroll-to-top: show a floating button once the user scrolls past the
+  // filter bar so they can jump back without a long swipe on mobile.
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const handleScroll = useCallback(() => {
+    setShowScrollTop(window.scrollY > 400);
+  }, []);
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
   // STATE: custom exercise create/edit/delete/copy
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -196,6 +207,21 @@ function HomePage() {
           onCancel={() => setDeletingExercise(null)}
         />
       )}
+
+      {/* Floating scroll-to-top button — appears after scrolling past the filter bar.
+          Positioned above the bottom nav on mobile (bottom-20), higher on desktop (bottom-8). */}
+      <button
+        type="button"
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        className={`fixed bottom-20 right-4 z-40 rounded-full border border-border bg-card p-3 text-muted-foreground shadow-lg transition-all duration-200 hover:text-foreground sm:bottom-8 ${
+          showScrollTop
+            ? 'translate-y-0 opacity-100'
+            : 'pointer-events-none translate-y-4 opacity-0'
+        }`}
+        aria-label="Scroll to top"
+      >
+        <ArrowUp className="h-5 w-5" />
+      </button>
     </div>
   );
 }

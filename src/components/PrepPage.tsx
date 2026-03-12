@@ -15,7 +15,7 @@
  *    - Similar to NgRx if you've used that in Angular
  */
 
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   DndContext,
@@ -34,7 +34,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ArrowRight, Coffee, GripVertical, Star, X } from 'lucide-react';
+import { ArrowRight, Coffee, GripVertical, Minus, Plus, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSession } from '../context/SessionContext';
 import { getExerciseById, BREAK_EXERCISE_ID, getExerciseName } from '../data/exercises';
@@ -82,7 +82,7 @@ function SortablePrepItem({
   });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: CSS.Translate.toString(transform),
     transition,
     zIndex: isDragging ? 10 : undefined,
     opacity: isDragging ? 0.5 : undefined,
@@ -90,9 +90,42 @@ function SortablePrepItem({
 
   return (
     <Card ref={setNodeRef} style={style}>
-      <CardContent className="py-3">
-        <div className="flex items-center justify-between gap-3">
-          {/* Drag handle */}
+      <CardContent className="px-3 py-3">
+        {/* Row 1: name + duration stepper + drag handle */}
+        <div className="flex items-center gap-2">
+          <span className="w-5 shrink-0 text-center">
+            {isBreak ? (
+              <Coffee className="inline h-4 w-4 text-muted-foreground" />
+            ) : (
+              <span className="text-sm text-muted-foreground">{exerciseNumber}.</span>
+            )}
+          </span>
+          <span className="min-w-0 flex-1 truncate font-medium text-foreground">{name}</span>
+          {/* Duration stepper — most-used control, sits at eye level with name */}
+          <div className="flex shrink-0 items-center gap-0.5">
+            <button
+              type="button"
+              onClick={() => onDurationChange(index, Math.max(1, se.duration - 1))}
+              disabled={se.duration <= 1}
+              className="rounded border border-input bg-secondary p-0.5 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+              aria-label={`Decrease duration for ${name}`}
+            >
+              <Minus className="h-3 w-3" />
+            </button>
+            <span className="min-w-[4ch] text-center text-xs text-foreground">
+              <span className="font-medium">{se.duration}</span>
+              <span className="text-muted-foreground">m</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => onDurationChange(index, Math.min(60, se.duration + 1))}
+              disabled={se.duration >= 60}
+              className="rounded border border-input bg-secondary p-0.5 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+              aria-label={`Increase duration for ${name}`}
+            >
+              <Plus className="h-3 w-3" />
+            </button>
+          </div>
           <button
             type="button"
             {...attributes}
@@ -102,41 +135,15 @@ function SortablePrepItem({
           >
             <GripVertical className="h-4 w-4" />
           </button>
-          <div className="flex min-w-0 flex-1 items-center">
-            <span className="mr-2 w-5 shrink-0 text-center">
-              {isBreak ? (
-                <Coffee className="inline h-4 w-4 text-muted-foreground" />
-              ) : (
-                <span className="text-sm text-muted-foreground">{exerciseNumber}.</span>
-              )}
-            </span>
-            <span className="text-foreground">{name}</span>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <input
-              type="number"
-              min={1}
-              max={60}
-              value={se.duration}
-              onChange={(e) => onDurationChange(index, Math.max(1, Number(e.target.value)))}
-              aria-label={`Duration for ${name} in minutes`}
-              className="w-16 rounded border border-input bg-secondary px-2 py-1 text-center text-sm text-foreground"
-            />
-            <span className="text-sm text-muted-foreground">min</span>
-            <button
-              type="button"
-              onClick={onRequestRemove}
-              className="ml-1 shrink-0 text-destructive transition-colors hover:text-destructive/80"
-              aria-label={`Remove ${name}`}
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
         </div>
+
+        {/* Row 2: summary */}
         {exercise?.summary && (
-          <p className="ml-8 mt-1 line-clamp-1 text-sm text-muted-foreground">{exercise.summary}</p>
+          <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{exercise.summary}</p>
         )}
-        <div className="ml-8 mt-1 flex items-end justify-between">
+
+        {/* Row 3: tags + actions */}
+        <div className="mt-2 flex items-end justify-between gap-2">
           <div className="flex flex-wrap gap-1">
             {exercise?.tags?.map((tag) => (
               <Badge key={tag} variant="outline" className="border-input text-xs text-primary">
@@ -144,15 +151,25 @@ function SortablePrepItem({
               </Badge>
             ))}
           </div>
-          {exercise && (
+          <div className="flex shrink-0 items-center gap-3">
             <button
               type="button"
-              onClick={() => onShowDetail(exercise)}
-              className="ml-2 inline-flex shrink-0 items-center gap-1 text-xs text-primary transition-colors hover:text-primary-hover"
+              onClick={onRequestRemove}
+              className="text-xs text-destructive transition-colors hover:text-destructive/80"
+              aria-label={`Remove ${name}`}
             >
-              Details <ArrowRight className="h-3 w-3" />
+              Remove
             </button>
-          )}
+            {exercise && (
+              <button
+                type="button"
+                onClick={() => onShowDetail(exercise)}
+                className="inline-flex items-center gap-1 text-xs text-primary transition-colors hover:text-primary-hover"
+              >
+                Details <ArrowRight className="h-3 w-3" />
+              </button>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -168,6 +185,17 @@ function PrepPage() {
   const [confirm, setConfirm] = useState<ConfirmConfig | null>(null);
   const template = useTemplateSaver();
 
+  // Scroll-position fades: hide top fade at scroll top, bottom fade at scroll bottom
+  const [showTopFade, setShowTopFade] = useState(false);
+  const [showBottomFade, setShowBottomFade] = useState(true);
+  const listRef = useRef<HTMLDivElement>(null);
+  const handleListScroll = useCallback(() => {
+    const el = listRef.current;
+    if (!el) return;
+    setShowTopFade(el.scrollTop > 0);
+    setShowBottomFade(el.scrollTop + el.clientHeight < el.scrollHeight - 1);
+  }, []);
+
   // Sensors for drag-and-drop — must be called before early return (Rules of Hooks)
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -181,6 +209,9 @@ function PrepPage() {
   }
 
   const sessionExercises = state.currentSession.exercises;
+
+  // Exercise IDs already in the queue — used to swap "+ Add" for "In queue"
+  const queuedExerciseIds = new Set(sessionExercises.map((ex) => ex.exerciseId));
 
   // Total time for the session
   const totalMinutes = sessionExercises.reduce((sum, ex) => sum + ex.duration, 0);
@@ -245,111 +276,141 @@ function PrepPage() {
           />
 
           <div className="my-4 flex items-center gap-2">
-            <label htmlFor="default-duration" className="text-sm text-muted-foreground">
-              Default duration:
-            </label>
-            <input
-              id="default-duration"
-              type="number"
-              min={1}
-              max={60}
-              value={defaultDuration}
-              onChange={(e) => setDefaultDuration(Math.max(1, Number(e.target.value)))}
-              className="w-16 rounded border border-input bg-secondary px-2 py-1 text-center text-sm text-foreground"
-            />
-            <span className="text-sm text-muted-foreground">min</span>
+            <span className="text-sm text-muted-foreground">Default duration:</span>
+            <button
+              type="button"
+              onClick={() => setDefaultDuration((d) => Math.max(1, d - 1))}
+              disabled={defaultDuration <= 1}
+              className="rounded border border-input bg-secondary p-1 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+              aria-label="Decrease default duration"
+            >
+              <Minus className="h-3.5 w-3.5" />
+            </button>
+            <span className="min-w-[5ch] text-center text-sm text-foreground">
+              <span className="font-medium">{defaultDuration}</span>
+              <span className="text-muted-foreground"> min</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setDefaultDuration((d) => Math.min(60, d + 1))}
+              disabled={defaultDuration >= 60}
+              className="rounded border border-input bg-secondary p-1 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+              aria-label="Increase default duration"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </button>
           </div>
 
           <h2 className="mb-3 text-xl font-semibold text-foreground">
             Exercises ({exerciseFilter.filtered.length})
           </h2>
-          <div className="scrollbar-dark max-h-[60vh] space-y-3 overflow-y-auto pr-2">
-            {exerciseFilter.sorted.map((exercise) => (
-              <Card key={exercise.id}>
-                <CardHeader className="py-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base text-primary">{exercise.name}</CardTitle>
-                    <button
-                      type="button"
-                      onClick={() => handleAddExercise(exercise.id)}
-                      className="shrink-0 text-sm text-primary hover:text-primary-hover"
-                    >
-                      + Add
-                    </button>
-                  </div>
-                </CardHeader>
-                <CardContent className="pb-3 pt-0">
-                  {exercise.summary && (
-                    <p className="line-clamp-2 text-sm text-muted-foreground">{exercise.summary}</p>
-                  )}
-                  <div className="mt-2 flex items-end justify-between">
-                    <div className="flex flex-wrap gap-1">
-                      {exercise.tags.map((tag) => (
-                        <Badge
-                          key={tag}
-                          variant="outline"
-                          className="border-input text-xs text-primary"
+          <div className="relative">
+            <div
+              className={`pointer-events-none absolute inset-x-0 top-0 z-10 h-10 bg-gradient-to-b from-background to-transparent transition-opacity duration-100 ${showTopFade ? 'opacity-100' : 'opacity-0'}`}
+            />
+            <div
+              ref={listRef}
+              onScroll={handleListScroll}
+              className="scrollbar-dark max-h-[40vh] space-y-3 overflow-y-auto pr-2 lg:max-h-[60vh]"
+            >
+              {exerciseFilter.sorted.map((exercise) => (
+                <Card key={exercise.id}>
+                  <CardHeader className="py-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base text-primary">{exercise.name}</CardTitle>
+                      {queuedExerciseIds.has(exercise.id) ? (
+                        <span className="shrink-0 text-xs italic text-muted-foreground">
+                          In queue
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleAddExercise(exercise.id)}
+                          className="shrink-0 text-sm text-primary hover:text-primary-hover"
                         >
-                          {tag}
-                        </Badge>
-                      ))}
+                          + Add
+                        </button>
+                      )}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setDetailExercise(exercise)}
-                      className="ml-2 inline-flex shrink-0 items-center gap-1 text-xs text-primary transition-colors hover:text-primary-hover"
-                    >
-                      Details <ArrowRight className="h-3 w-3" />
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardHeader>
+                  <CardContent className="pb-3 pt-0">
+                    {exercise.summary && (
+                      <p className="line-clamp-2 text-sm text-muted-foreground">
+                        {exercise.summary}
+                      </p>
+                    )}
+                    <div className="mt-2 flex items-end justify-between">
+                      <div className="flex flex-wrap gap-1">
+                        {exercise.tags.map((tag) => (
+                          <Badge
+                            key={tag}
+                            variant="outline"
+                            className="border-input text-xs text-primary"
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setDetailExercise(exercise)}
+                        className="ml-2 inline-flex shrink-0 items-center gap-1 text-xs text-primary transition-colors hover:text-primary-hover"
+                      >
+                        Details <ArrowRight className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            <div
+              className={`pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-background to-transparent transition-opacity duration-100 ${showBottomFade ? 'opacity-100' : 'opacity-0'}`}
+            />
           </div>
         </div>
 
         {/* Right column: session queue */}
         <div>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-foreground">
-              Session Queue
+          <div className="mb-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-foreground">Session Queue</h2>
               {sessionExercises.length > 0 && (
-                <span className="ml-2 text-base font-normal text-muted-foreground">
-                  {sessionExercises.length} exercise{sessionExercises.length !== 1 && 's'}
-                  {' · '}
-                  {totalMinutes} min
-                </span>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => template.start(state.currentSession?.name ?? '')}
+                    className="inline-flex items-center gap-1 text-sm text-star transition-colors hover:text-star/80"
+                    title="Save as favorite"
+                  >
+                    <Star className="h-4 w-4 fill-current" /> Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setConfirm({
+                        title: 'Clear queue?',
+                        message: `Remove all ${sessionExercises.length} exercise${sessionExercises.length !== 1 ? 's' : ''} from the queue?`,
+                        confirmLabel: 'Clear',
+                        onConfirm: () => {
+                          dispatch({ type: 'CLEAR_SESSION' });
+                          setConfirm(null);
+                          toast('Queue cleared');
+                        },
+                      })
+                    }
+                    className="text-sm text-muted-foreground transition-colors hover:text-destructive"
+                  >
+                    Clear
+                  </button>
+                </div>
               )}
-            </h2>
+            </div>
             {sessionExercises.length > 0 && (
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => template.start(state.currentSession?.name ?? '')}
-                  className="inline-flex items-center gap-1 text-sm text-star transition-colors hover:text-star/80"
-                  title="Save as favorite"
-                >
-                  <Star className="h-4 w-4 fill-current" /> Save
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setConfirm({
-                      title: 'Clear queue?',
-                      message: `Remove all ${sessionExercises.length} exercise${sessionExercises.length !== 1 ? 's' : ''} from the queue?`,
-                      confirmLabel: 'Clear',
-                      onConfirm: () => {
-                        dispatch({ type: 'CLEAR_SESSION' });
-                        setConfirm(null);
-                        toast('Queue cleared');
-                      },
-                    })
-                  }
-                  className="text-sm text-muted-foreground transition-colors hover:text-destructive"
-                >
-                  Clear
-                </button>
-              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {sessionExercises.length} exercise{sessionExercises.length !== 1 && 's'}
+                {' · '}
+                {totalMinutes} min
+              </p>
             )}
           </div>
 
@@ -418,9 +479,25 @@ function PrepPage() {
           )}
 
           {sessionExercises.length > 0 && (
-            <Button size="lg" className="mt-6 w-full" onClick={handleStartSession}>
-              Start Session ({totalMinutes} min)
-            </Button>
+            <div className="mt-6 flex flex-col gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  dispatch({
+                    type: 'ADD_EXERCISE',
+                    exerciseId: BREAK_EXERCISE_ID,
+                    duration: 5,
+                  });
+                  toast('Break added');
+                }}
+              >
+                <Coffee className="mr-1 h-4 w-4" /> Add Break
+              </Button>
+              <Button size="lg" className="w-full" onClick={handleStartSession}>
+                Start Session ({totalMinutes} min)
+              </Button>
+            </div>
           )}
         </div>
       </div>

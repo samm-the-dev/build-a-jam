@@ -23,7 +23,6 @@
 
 import { Copy, ExternalLink, Eye, EyeOff, Pencil, Share2, Trash2, X } from 'lucide-react';
 import { shareExercise } from '../lib/share';
-import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss';
 import type { Exercise } from '../types';
 import { Badge } from './ui/badge';
 import {
@@ -61,11 +60,6 @@ function ExerciseDetailModal({
   isHidden,
   onToggleHidden,
 }: ExerciseDetailModalProps) {
-  // Swipe-to-dismiss: dragging the dialog down past 80px calls onClose.
-  // The ref goes on DialogContent (the scrollable container) so the hook
-  // can detect scroll position and only engage when the user is at the top.
-  const { ref: swipeRef, style: swipeStyle } = useSwipeToDismiss(onClose);
-
   return (
     <Dialog
       open={true}
@@ -74,17 +68,15 @@ function ExerciseDetailModal({
       }}
     >
       <DialogContent
-        ref={swipeRef}
-        style={swipeStyle}
-        className="scrollbar-dark max-h-[80vh] max-w-2xl gap-0 overflow-y-auto bg-card p-0"
+        onSwipeDismiss={onClose}
+        className="scrollbar-dark max-w-2xl gap-0 bg-card p-0"
+        // Prevent Radix from auto-focusing the first interactive element (share button).
+        // The dialog itself is focused via the focus trap — keyboard users can Tab to
+        // reach share/close. Without this, the share icon gets a visible focus ring on open.
+        onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        {/* Drag handle — mobile only; swipe-to-dismiss is a touch gesture */}
-        <div className="flex justify-center pt-3 sm:hidden">
-          <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
-        </div>
-
         {/* Header — title left, share + close icons right */}
-        <DialogHeader className="border-b border-border px-6 py-4">
+        <DialogHeader className="border-b border-border px-6 pb-4 pt-0 text-left sm:py-4">
           <div className="flex items-center justify-between gap-4">
             <DialogTitle className="text-2xl font-bold text-primary">{exercise.name}</DialogTitle>
             <div className="flex shrink-0 items-center gap-1">
@@ -123,10 +115,6 @@ function ExerciseDetailModal({
 
         {/* Body */}
         <div className="p-6">
-          {exercise.summary && (
-            <p className="mb-4 text-base italic text-secondary-foreground">{exercise.summary}</p>
-          )}
-
           {exercise.tags.length > 0 && (
             <div className="mb-4 flex flex-wrap gap-1">
               {exercise.tags.map((tag) => (
@@ -148,7 +136,7 @@ function ExerciseDetailModal({
         </div>
 
         {/* Footer: secondary actions left, primary action rightmost */}
-        <DialogFooter className="flex flex-row flex-wrap items-center gap-2 border-t border-border px-6 py-3">
+        <DialogFooter className="flex flex-row flex-wrap items-center justify-end gap-2 border-t border-border px-6 py-3">
           {/* Hide/Unhide — secondary, low-frequency, leftmost */}
           {onToggleHidden && (
             <Button

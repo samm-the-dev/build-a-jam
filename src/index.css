@@ -3,6 +3,25 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Dialog / bottom-sheet entrance animation.
+ * Used by DialogContent instead of tailwindcss-animate's composite enter/exit
+ * animations, which conflict with imperative transform manipulation (e.g.
+ * swipe-to-dismiss). A simple custom keyframe avoids the conflict entirely. */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.2s ease-out;
+}
+
 /*
  * Custom base styles
  * These override/extend Tailwind's defaults

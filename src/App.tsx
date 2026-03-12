@@ -56,7 +56,7 @@ function App() {
       >
         Skip to main content
       </a>
-      <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-4 py-8 pb-20 sm:px-6 sm:pb-8 lg:px-8">
+      <div className="mx-auto flex min-h-screen max-w-7xl flex-col p-4 pb-12 sm:px-6 sm:pb-8 lg:px-8">
         <header
           className={`flex-shrink-0 text-center ${isSessionView ? 'mb-4 border-b border-border pb-4' : 'mb-8 border-b-2 border-primary pb-6 sm:mb-12 sm:pb-8'}`}
         >

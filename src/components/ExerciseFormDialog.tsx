@@ -101,8 +101,7 @@ function ExerciseFormDialog({
   // The source to pre-fill from: editing beats copy-prefill beats empty
   const prefill = existingExercise ?? prefillExercise;
 
-  // Pre-fill from existing exercise when editing, or from source exercise when copying
-  // Note: description is now stored as HTML directly (Tiptap handles it natively)
+  // Pre-fill from existing exercise when editing, or from source exercise when copying.
   const [name, setName] = useState(prefill?.name ?? '');
   const [description, setDescription] = useState(prefill?.description ?? '');
   const [tags, setTags] = useState<string[]>(prefill?.tags ?? []);
@@ -168,7 +167,7 @@ function ExerciseFormDialog({
         if (!isOpen) onClose();
       }}
     >
-      <DialogContent className="max-w-2xl bg-card">
+      <DialogContent onSwipeDismiss={onClose} className="max-w-2xl bg-card">
         <DialogHeader>
           <DialogTitle className="text-foreground">
             {isEditing ? 'Edit Exercise' : prefillExercise ? 'Copy as Custom' : 'Create Exercise'}
@@ -271,11 +270,11 @@ function ExerciseFormDialog({
             </label>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="gap-2">
+            <Button type="submit">{isEditing ? 'Save Changes' : 'Create Exercise'}</Button>
             <Button type="button" variant="secondary" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit">{isEditing ? 'Save Changes' : 'Create Exercise'}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
