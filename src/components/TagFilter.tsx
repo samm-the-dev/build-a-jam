@@ -48,7 +48,7 @@ function TagFilter({
   // "Show more" first expands to all featured tags, then to all tags.
   const baseTags = maxVisible && !showAll ? featuredTags.slice(0, maxVisible) : featuredTags;
   const displayedTags = showAll ? allTags : baseTags;
-  const hasMore = showAll ? false : displayedTags.length < allTags.length;
+  const hasMore = showAll || displayedTags.length < allTags.length;
 
   return (
     <div className="flex flex-col gap-2" role="group" aria-label="Filter by tags">
