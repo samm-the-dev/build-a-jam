@@ -15,7 +15,7 @@
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, ChevronRight, Star } from 'lucide-react';
+import { ArrowRight, ChevronRight, Pencil, Play, Star, Trash2, Type } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSession } from '../context/SessionContext';
 import { getExerciseById, BREAK_EXERCISE_ID } from '../data/exercises';
@@ -157,8 +157,9 @@ function FavoritesPage() {
                           </div>
 
                           {/* Collapsed: exercise names as badges */}
+                          {/* Collapsed: exercise names as non-interactive badges (tap the row to expand) */}
                           {!isExpanded && (
-                            <div className="ml-5 mt-2 flex flex-wrap gap-1">
+                            <div className="mt-2 flex flex-wrap gap-1">
                               {template.exercises.map((se, j) => {
                                 const isBreak = se.exerciseId === BREAK_EXERCISE_ID;
                                 const ex = isBreak ? undefined : getExerciseById(se.exerciseId);
@@ -167,18 +168,8 @@ function FavoritesPage() {
                                     key={se.slotId ?? j}
                                     variant="outline"
                                     className={`border-input text-xs ${
-                                      ex
-                                        ? 'cursor-pointer text-primary hover:bg-secondary/80'
-                                        : 'text-secondary-foreground'
+                                      ex ? 'text-primary' : 'text-secondary-foreground'
                                     }`}
-                                    onClick={
-                                      ex
-                                        ? (e: React.MouseEvent) => {
-                                            e.stopPropagation();
-                                            setDetailExercise(ex);
-                                          }
-                                        : undefined
-                                    }
                                   >
                                     {isBreak ? 'Break' : (ex?.name ?? se.exerciseId)}
                                   </Badge>
@@ -190,7 +181,7 @@ function FavoritesPage() {
 
                         {/* Expanded: full exercise list + actions */}
                         {isExpanded && (
-                          <div className="ml-5 mt-4 space-y-3">
+                          <div className="mt-4 space-y-3">
                             {template.exercises.map((se, j) => {
                               const isBreak = se.exerciseId === BREAK_EXERCISE_ID;
                               const ex = isBreak ? undefined : getExerciseById(se.exerciseId);
@@ -247,30 +238,46 @@ function FavoritesPage() {
                               </div>
                             )}
 
-                            {/* Actions */}
-                            <div className="mt-3 flex items-center gap-4 border-t pt-3">
-                              <Button size="sm" onClick={() => handleStartTemplate(template)}>
-                                Start Session
+                            {/* Actions — icon buttons on mobile, labelled on desktop.
+                                Order: destructive leftmost → secondary → primary rightmost. */}
+                            <div className="mt-3 flex items-center gap-1 border-t pt-3 sm:gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDeleteTemplate(template.id)}
+                                title="Delete"
+                                className="text-destructive hover:text-destructive/80"
+                              >
+                                <Trash2 className="h-4 w-4 sm:mr-1" />
+                                <span className="hidden sm:inline">Delete</span>
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleStartRename(template)}
+                                title="Rename"
+                              >
+                                <Type className="h-4 w-4 sm:mr-1" />
+                                <span className="hidden sm:inline">Rename</span>
                               </Button>
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleEditTemplate(template)}
+                                title="Edit in prep"
                               >
-                                Edit in Prep
+                                <Pencil className="h-4 w-4 sm:mr-1" />
+                                <span className="hidden sm:inline">Edit</span>
                               </Button>
-                              <button
-                                onClick={() => handleStartRename(template)}
-                                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                              <div className="flex-1" />
+                              <Button
+                                size="sm"
+                                onClick={() => handleStartTemplate(template)}
+                                title="Start session"
                               >
-                                Rename
-                              </button>
-                              <button
-                                onClick={() => handleDeleteTemplate(template.id)}
-                                className="text-xs text-muted-foreground transition-colors hover:text-destructive"
-                              >
-                                Delete
-                              </button>
+                                <Play className="h-4 w-4 sm:mr-1" />
+                                <span className="hidden sm:inline">Start</span>
+                              </Button>
                             </div>
                           </div>
                         )}
